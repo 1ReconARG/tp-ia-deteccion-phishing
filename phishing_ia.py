@@ -6,11 +6,19 @@ Mateo Valenzuela y Valentino Albarian.
 Prototipo: entrena y compara cuatro recursos vistos en la materia sobre el
 mismo conjunto público de correos etiquetados (aprendizaje supervisado):
   1) Red bayesiana: el nodo "phishing" influye sobre cada palabra, y las
-     palabras se suponen independientes entre sí dado la clase.
+     palabras se suponen independientes entre sí dada la clase.
   2) Árbol de decisión aprendido de los ejemplos.
   3) Perceptrón simple.
   4) Perceptrón multicapa con activación sigmoidea, entrenado con
      backpropagation y descenso de gradiente.
+
+Con el conjunto de VALIDACIÓN se elige el umbral del perceptrón multicapa
+(sección 5.5 del TP); el de PRUEBA se usa una sola vez, al final.
+
+Nombres de la biblioteca: scikit-learn llama TfidfVectorizer a la
+representación numérica de la sección 2.4 (un peso por palabra) y
+MultinomialNB a la red bayesiana de la sección 4.3 (nodo "phishing" con una
+flecha a cada palabra e independencia condicional).
 
 Además guarda en modelo/ lo que usa el agente (agente.py): el vectorizador,
 el perceptrón multicapa y el árbol.
@@ -89,13 +97,14 @@ def dividir(df):
 
 def nuevo_vectorizador():
     """Cada correo se convierte en un vector de números: un peso por palabra
-    para las 3.000 palabras más útiles."""
+    para las 3.000 palabras más útiles. El peso sube si la palabra se repite
+    en el correo y baja si aparece en casi todos (sección 2.4 del TP)."""
     return TfidfVectorizer(max_features=3000, stop_words="english", min_df=3)
 
 
 def nuevos_modelos():
     return {
-        "Red bayesiana": MultinomialNB(),
+        "Red bayesiana": MultinomialNB(),   # P(phishing) · Π P(palabra | phishing)
         "Árbol de decisión": DecisionTreeClassifier(max_depth=12, random_state=SEMILLA),
         "Perceptrón simple": Perceptron(max_iter=50, random_state=SEMILLA),
         "Perceptrón multicapa": MLPClassifier(hidden_layer_sizes=(64,), activation="logistic",
@@ -110,6 +119,17 @@ def guardar_modelo(vect, modelos, carpeta=MODELO):
     joblib.dump({"vectorizador": vect,
                  "mlp": modelos["Perceptrón multicapa"],
                  "arbol": modelos["Árbol de decisión"]}, carpeta / "detector.joblib", compress=3)
+
+
+def umbral_en_validacion(p_val, y_val, max_fp=0.01):
+    """Elige el umbral con el conjunto de VALIDACIÓN: el más bajo (entre 0,50
+    y 0,99) con el que no más del 1 % de los legítimos queda marcado por
+    error. Así la prueba no se usa para decidir nada."""
+    legitimos = p_val[(y_val == 0).to_numpy()]
+    for t in [x / 100 for x in range(50, 100)]:
+        if (legitimos >= t).mean() <= max_fp:
+            return t
+    return 0.99
 
 
 # ------------------------------------------------------------ 3. Entrenar y evaluar
@@ -180,6 +200,17 @@ def main():
     plt.title("Perceptrón multicapa: el error baja al ajustar los pesos")
     plt.grid(alpha=0.3); plt.tight_layout()
     plt.savefig(SALIDA / "curva_error_mlp.png", dpi=150)
+
+    # Umbral elegido en validación y medido una sola vez en prueba.
+    t = umbral_en_validacion(mlp.predict_proba(v_val)[:, 1], y_val)
+    pred_t = (mlp.predict_proba(v_test)[:, 1] >= t).astype(int)
+    vn, fp, fn, vp = confusion_matrix(y_test, pred_t).ravel()
+    informe.append("=== Perceptrón multicapa con umbral elegido en validación ===\n"
+                   f"Umbral: {t:.2f}\n"
+                   f"Exactitud prueba: {accuracy_score(y_test, pred_t):.4f}\n"
+                   f"Phishing detectado (recall): {vp / (vp + fn):.4f}\n"
+                   f"Legítimos marcados por error: {fp / (fp + vn):.4f}\n"
+                   f"VP: {vp}\nFN: {fn}\nFP: {fp}\nVN: {vn}")
 
     guardar_modelo(vect, modelos)
     print("Modelo del agente guardado en modelo/detector.joblib")

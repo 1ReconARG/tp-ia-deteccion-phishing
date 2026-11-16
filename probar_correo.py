@@ -39,20 +39,28 @@ def main():
     print(f"2. Sospecha (lógica difusa): baja {coma(g['baja'])} · media {coma(g['media'])} · alta {coma(g['alta'])}")
     print(f"   Dominio nuevo: {coma(a.dominio_nuevo)} · dominio antiguo (complemento): {coma(1 - a.dominio_nuevo)}")
     print("   Activación de cada regla (Y difuso = mínimo):")
-    for accion, grado in r["reglas"].items():
-        print(f"     {accion:<31} {coma(grado)}")
-    print(f"   => ACCIÓN: {r['accion']}")
+    for nombre, (accion, aviso, grado) in r["reglas"].items():
+        regla = f"SI sospecha {nombre} -> {accion}" + (" + aviso" if aviso else "")
+        print(f"     {regla:<72} {coma(grado)}")
+    print(f"   => ACCIÓN: {r['accion']}" + (" + AVISO AL ÁREA DE SEGURIDAD" if r["aviso"] else ""))
     print("3. Árbol de decisión de costos (esperanza matemática):")
     for accion, costo in r["esperados"].items():
         print(f"     {accion:<31} costo esperado {coma(costo, 1)}")
     print(f"   => menor costo esperado: {r['accion_costos']}")
-    print(f"4. Por qué (camino en el árbol aprendido, que dice «{r['clase_arbol']}»):")
     si = [x.split(" ", 1)[1] for x in r["explicacion"] if x.startswith("aparece")]
     no = [x.split(" ", 2)[2] for x in r["explicacion"] if x.startswith("no aparece")]
-    print(f"     aparecen:    {', '.join(si) if si else '(ninguna de las que pregunta)'}")
-    print(f"     no aparecen: {', '.join(no) if no else '-'}")
-    if r["accion"] == "ENTREGAR CON ADVERTENCIA":
-        print("5. Generador de problemas: caso dudoso enviado a revisión (datos/a_revisar.csv).")
+    if r["coincide"]:
+        print(f"4. Por qué (camino en el árbol aprendido, que también dice «{r['clase_arbol']}»):")
+        if si:
+            print(f"     aparecen:    {', '.join(si)}")
+        else:
+            print(f"     no aparece ninguna de las palabras por las que pregunta: llega a «{r['clase_arbol']}» por descarte")
+        print(f"     no aparecen: {', '.join(no[:6]) if no else '-'}" + (" ..." if len(no) > 6 else ""))
+    else:
+        print(f"4. Por qué: el árbol aprendido dice «{r['clase_arbol']}» y el perceptrón multicapa no.")
+        print("     Su explicación no vale para este correo, así que no se muestra.")
+    if r["a_revision"]:
+        print(f"5. Generador de problemas: a revisión (datos/a_revisar.csv) porque {' y '.join(r['a_revision'])}.")
     if a.denunciar:
         critico_registrar(texto, a.denunciar == "phishing")
         print(f"Crítico: denuncia registrada como «{a.denunciar}» en datos/denuncias.csv.")

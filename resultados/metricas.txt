@@ -41,3 +41,13 @@ VP: 941
 FN: 30
 FP: 37
 VN: 1608
+
+=== Perceptrón multicapa con umbral elegido en validación ===
+Umbral: 0.77
+Exactitud prueba: 0.9667
+Phishing detectado (recall): 0.9258
+Legítimos marcados por error: 0.0091
+VP: 899
+FN: 72
+FP: 15
+VN: 1630
