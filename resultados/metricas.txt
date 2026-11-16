@@ -1,53 +1,53 @@
 === Red bayesiana ===
-Exactitud validación: 0.9595
-Exactitud prueba: 0.9587
-Phishing detectado (recall): 0.9320
-Precisión: 0.9556
-Legítimos marcados por error: 0.0255
-VP: 905
-FN: 66
-FP: 42
-VN: 1603
+Exactitud validación: 0.9494
+Exactitud prueba: 0.9521
+Phishing detectado (recall): 0.9026
+Precisión: 0.9656
+Legítimos marcados por error: 0.0188
+VP: 871
+FN: 94
+FP: 31
+VN: 1614
 
 === Árbol de decisión ===
-Exactitud validación: 0.8459
-Exactitud prueba: 0.8505
-Phishing detectado (recall): 0.9434
-Precisión: 0.7316
-Legítimos marcados por error: 0.2043
-VP: 916
-FN: 55
-FP: 336
-VN: 1309
+Exactitud validación: 0.8456
+Exactitud prueba: 0.8456
+Phishing detectado (recall): 0.9264
+Precisión: 0.7292
+Legítimos marcados por error: 0.2018
+VP: 894
+FN: 71
+FP: 332
+VN: 1313
 
 === Perceptrón simple ===
-Exactitud validación: 0.9629
-Exactitud prueba: 0.9618
-Phishing detectado (recall): 0.9475
-Precisión: 0.9494
-Legítimos marcados por error: 0.0298
-VP: 920
+Exactitud validación: 0.9559
+Exactitud prueba: 0.9556
+Phishing detectado (recall): 0.9472
+Precisión: 0.9336
+Legítimos marcados por error: 0.0395
+VP: 914
 FN: 51
-FP: 49
-VN: 1596
+FP: 65
+VN: 1580
 
 === Perceptrón multicapa ===
-Exactitud validación: 0.9725
-Exactitud prueba: 0.9744
-Phishing detectado (recall): 0.9691
-Precisión: 0.9622
-Legítimos marcados por error: 0.0225
-VP: 941
-FN: 30
-FP: 37
-VN: 1608
+Exactitud validación: 0.9709
+Exactitud prueba: 0.9693
+Phishing detectado (recall): 0.9565
+Precisión: 0.9605
+Legítimos marcados por error: 0.0231
+VP: 923
+FN: 42
+FP: 38
+VN: 1607
 
 === Perceptrón multicapa con umbral elegido en validación ===
-Umbral: 0.77
-Exactitud prueba: 0.9667
-Phishing detectado (recall): 0.9258
-Legítimos marcados por error: 0.0091
-VP: 899
-FN: 72
-FP: 15
-VN: 1630
+Umbral: 0.83
+Exactitud prueba: 0.9567
+Phishing detectado (recall): 0.8933
+Legítimos marcados por error: 0.0061
+VP: 862
+FN: 103
+FP: 10
+VN: 1635

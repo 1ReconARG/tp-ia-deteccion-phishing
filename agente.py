@@ -65,11 +65,15 @@ def trapecio(x, a, b, c, d):
 
 
 def sospecha(p):
-    """Grados de pertenencia del nivel de sospecha (Figura 7 del TP)."""
+    """Grados de pertenencia del nivel de sospecha (Figura 7 del TP).
+    Están calibrados con el árbol de costos (sección 4.2): con los costos de
+    la Tabla 9, advertir cuesta menos que entregar desde p = 2/72 ≈ 0,03, y
+    la cuarentena cuesta menos que advertir desde p = 18/48 = 0,375. Los
+    conjuntos se cruzan justo en esos dos puntos."""
     return {
-        "baja": trapecio(p, 0.0, 0.0, 0.20, 0.45),
-        "media": trapecio(p, 0.25, 0.50, 0.50, 0.75),
-        "alta": trapecio(p, 0.55, 0.80, 1.0, 1.0),
+        "baja": trapecio(p, 0.0, 0.0, 0.01, 0.05),
+        "media": trapecio(p, 0.01, 0.05, 0.30, 0.45),
+        "alta": trapecio(p, 0.30, 0.45, 1.0, 1.0),
     }
 
 

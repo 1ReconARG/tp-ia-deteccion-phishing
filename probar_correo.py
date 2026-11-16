@@ -25,7 +25,9 @@ coma = lambda x, n=2: f"{x:.{n}f}".replace(".", ",")
 def main():
     ap = argparse.ArgumentParser(description="Prueba el agente detector de phishing con un correo.")
     ap.add_argument("archivo", help="archivo .txt con el correo (asunto y cuerpo)")
-    ap.add_argument("--dominio-nuevo", type=float, default=0.5)
+    ap.add_argument("--dominio-nuevo", type=float, default=0.5,
+                    help="grado (0 a 1) en que el dominio del remitente es nuevo. Se carga "
+                         "a mano: el conjunto de datos no trae remitente y no se puede medir")
     ap.add_argument("--denunciar", choices=["phishing", "legitimo"])
     a = ap.parse_args()
 

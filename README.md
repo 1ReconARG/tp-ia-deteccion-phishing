@@ -48,7 +48,7 @@ python probar_correo.py ejemplos/01_banco_falso.txt --dominio-nuevo 0.9
 ```
 
 ```
-1. Perceptrón multicapa -> probabilidad de phishing: 0,992
+1. Perceptrón multicapa -> probabilidad de phishing: 0,987
 2. Sospecha (lógica difusa): baja 0,00 · media 0,00 · alta 1,00
    Dominio nuevo: 0,90 · dominio antiguo (complemento): 0,10
    Activación de cada regla (Y difuso = mínimo):
@@ -58,46 +58,51 @@ python probar_correo.py ejemplos/01_banco_falso.txt --dominio-nuevo 0.9
      SI sospecha baja -> ENTREGAR                                             0,00
    => ACCIÓN: CUARENTENA + AVISO AL ÁREA DE SEGURIDAD
 3. Árbol de decisión de costos (esperanza matemática):
-     ENTREGAR                        costo esperado 99,2
-     ENTREGAR CON ADVERTENCIA        costo esperado 29,8
-     CUARENTENA                      costo esperado 0,2
+     ENTREGAR                        costo esperado 98,7
+     ENTREGAR CON ADVERTENCIA        costo esperado 29,6
+     CUARENTENA                      costo esperado 0,3
    => menor costo esperado: CUARENTENA
 4. Por qué (camino en el árbol aprendido, que también dice «phishing»):
      aparecen:    «click»
-     no aparecen: «enron», «apple», «exmh», «language», «executive», «september» ...
+     no aparecen: «enron», «pretty», «resource», «september», «exmh», «language» ...
 ```
 
-`--dominio-nuevo` es el grado de pertenencia (0 a 1) del dominio del remitente al conjunto difuso «dominio nuevo»; el dominio antiguo es su complemento (1 − μ). Si no se indica, vale 0,5. Con `--denunciar phishing` o `--denunciar legitimo` se registra la denuncia para el crítico, y `python agente.py` reentrena.
+`--dominio-nuevo` es el grado de pertenencia (0 a 1) del dominio del remitente al conjunto difuso «dominio nuevo»; el dominio antiguo es su complemento (1 − μ). Si no se indica, vale 0,5. **Es un dato que se carga a mano:** el conjunto de datos solo trae el texto y la etiqueta de cada correo, sin remitente ni encabezados, así que la antigüedad del dominio no se puede medir. En una organización saldría de consultar cuándo se registró el dominio. Con `--denunciar phishing` o `--denunciar legitimo` se registra la denuncia para el crítico, y `python agente.py` reentrena.
 
 Los cinco correos de `ejemplos/` son inventados y están en inglés, como el conjunto de datos:
 
 | Ejemplo | Probabilidad | Acción (difusa) | Árbol de costos | Árbol aprendido |
 |---|---|---|---|---|
-| `01_banco_falso` (dominio nuevo 0,9) | 0,992 | Cuarentena + aviso | Cuarentena | Coincide |
+| `01_banco_falso` (dominio nuevo 0,9) | 0,987 | Cuarentena + aviso | Cuarentena | Coincide |
 | `02_reunion` | 0,000 | Entregar | Entregar | Coincide |
 | `03_premio` (dominio nuevo 0,9) | 0,998 | Cuarentena + aviso | Cuarentena | Coincide |
-| `04_actualizar_datos` (dominio nuevo 0,1) | 0,830 | Entregar con advertencia + aviso | Cuarentena | Coincide |
-| `05_aviso_de_sistemas` | 0,275 | Entregar | Entregar con advertencia | No coincide → a revisión |
+| `04_actualizar_datos` (dominio nuevo 0,1) | 0,945 | Entregar con advertencia + aviso | Cuarentena | Coincide |
+| `05_aviso_de_sistemas` | 0,069 | Entregar con advertencia | Entregar con advertencia | No coincide → a revisión |
 
 - **Ejemplo 04:** la difusa tiene en cuenta que el dominio es antiguo (puede ser un proveedor real con la cuenta comprometida) y el árbol de costos no; por eso advierte y avisa en lugar de apartar el correo.
-- **Ejemplo 05:** muestra por qué el TP usa el árbol de costos para **calibrar** la capa difusa (sección 4.2): con la Figura 7, la sospecha «baja» llega hasta 0,45, y para p = 0,275 la difusa entrega mientras que los costos de la Tabla 9 ya recomiendan advertir. Además, el árbol aprendido dice «phishing» y el perceptrón multicapa no: el agente no muestra una explicación que contradice su decisión y manda el caso a revisión.
+- **Ejemplo 05:** con p = 0,069 la sospecha es «media» y la difusa advierte, igual que el árbol de costos. Las funciones de pertenencia están **calibradas con el árbol de costos** (sección 4.2 del TP): con los costos de la Tabla 9, advertir conviene desde p ≈ 0,03 y la cuarentena desde p = 0,375, y los conjuntos difusos se cruzan en esos dos puntos. Además, el árbol aprendido dice «phishing» y el perceptrón multicapa no: el agente no muestra una explicación que contradice su decisión y manda el caso a revisión.
+- **El umbral 0,83 y las acciones son cosas distintas.** El umbral mide al clasificador por sí solo (¿lo llamaría phishing?) contra las metas de la sección 5.3. La acción la deciden los costos: con los de la Tabla 9, que son ilustrativos, apartar un correo legítimo cuesta 20 y dejar pasar un phishing cuesta 100, y por eso la cuarentena empieza mucho antes. Si el área de seguridad considera que la cuarentena molesta más, sube ese costo y el corte se corre.
 
-## Resultados de los cuatro modelos (conjunto de prueba: 2.616 correos)
+## Resultados de los cuatro modelos (conjunto de prueba: 2.610 correos)
 
 | Modelo | Exactitud | Phishing detectado | Legítimos marcados por error |
 |---|---|---|---|
-| Red bayesiana | 95,9 % | 93,2 % | 2,6 % |
-| Árbol de decisión (12 niveles) | 85,1 % | 94,3 % | 20,4 % |
-| Perceptrón simple | 96,2 % | 94,8 % | 3,0 % |
-| Perceptrón multicapa (64 neuronas) | **97,4 %** | **96,9 %** | **2,3 %** |
+| Red bayesiana | 95,2 % | 90,3 % | **1,9 %** |
+| Árbol de decisión (12 niveles) | 84,6 % | 92,6 % | 20,2 % |
+| Perceptrón simple | 95,6 % | 94,7 % | 4,0 % |
+| Perceptrón multicapa (64 neuronas) | **96,9 %** | **95,7 %** | 2,3 % |
 
-Esos números usan el umbral 0,5. **Ajuste del umbral en validación:** `phishing_ia.py` elige, con el conjunto de validación, el umbral más bajo con el que no más del 1 % de los legítimos queda marcado por error. Da **0,77**, y medido una sola vez en prueba el perceptrón multicapa marca por error el **0,9 %** de los legítimos (cumple la meta de la sección 5.3) y detecta el **92,6 %** del phishing (queda debajo de la meta del 95 %). Para cumplir las dos metas a la vez faltan los rasgos estructurales.
+Esos números usan el umbral 0,5. **Ajuste del umbral en validación:** `phishing_ia.py` elige, con el conjunto de validación, el umbral más bajo con el que no más del 1 % de los legítimos queda marcado por error. Da **0,83**, y medido una sola vez en prueba el perceptrón multicapa marca por error el **0,6 %** de los legítimos (cumple la meta de la sección 5.3) y detecta el **89,3 %** del phishing (queda debajo de la meta del 95 %). Para cumplir las dos metas a la vez faltan los rasgos estructurales.
+
+**Cuánto pesan las diferencias.** Es una sola división de los datos con una sola semilla. Entre el perceptrón multicapa y el simple hay 36 correos de diferencia sobre 2.610: es una ventaja chica, y con otra división podría cambiar. `requirements.txt` fija las versiones de las bibliotecas (pandas 3.1.1 y scikit-learn 1.9.1); con otras versiones los números pueden variar un poco.
 
 ![Comparación de los cuatro modelos](resultados/comparacion_modelos.png)
 
 ![Matrices de confusión](resultados/matrices_confusion.png)
 
-Los primeros niveles del árbol aprendido muestran un **sesgo de los datos**: una de las primeras preguntas es la palabra «enron», porque muchos correos legítimos del conjunto vienen de esa empresa (Tabla 15 del TP).
+**El árbol de 12 niveles se queda corto.** Acierta solo el 85,4 % de los mismos correos con los que se entrenó (y el 84,6 % en validación), así que el problema no es que tenga demasiadas ramas, sino que con 12 niveles no le alcanzan para separar los casos. Sin límite llega al 91,1 % en validación, pero con 708 hojas: ya no se puede leer como reglas, que es la advertencia de la cátedra sobre el gran número de ramas. Lo dejamos en 12 niveles porque lo usamos para **explicar**, no para decidir.
+
+Los primeros niveles del árbol aprendido muestran además un **sesgo de los datos**: una de las primeras preguntas es la palabra «enron», porque muchos correos legítimos del conjunto vienen de esa empresa (Tabla 15 del TP). Es un atajo: sirve en este conjunto y no en otra organización.
 
 ![Primeros niveles del árbol](resultados/arbol_primeros_niveles.png)
 
@@ -121,7 +126,16 @@ Los primeros niveles del árbol aprendido muestran un **sesgo de los datos**: un
 
 ## Datos
 
-`datos/correos_anonimizados.csv`: 17.437 correos (10.966 legítimos y 6.471 de phishing) del *Phishing Email Dataset* (Kaggle; copia en https://huggingface.co/datasets/zefang-liu/phishing-email-dataset). Se quitaron los vacíos y los duplicados, y las direcciones de correo, los enlaces y los números largos se reemplazaron por `<EMAIL>`, `<URL>` y `<NUM>`.
+`datos/correos_anonimizados.csv`: 17.396 correos (10.967 legítimos y 6.429 de phishing) del *Phishing Email Dataset* (Kaggle; copia en https://huggingface.co/datasets/zefang-liu/phishing-email-dataset). Es un conjunto **público**: no son correos propios. Solo trae el texto y la etiqueta de cada correo, sin encabezados ni remitente.
+
+Preparación (`cargar()` y `anonimizar()` en `phishing_ia.py`):
+
+- Se pasan a minúsculas y se quitan los vacíos y los duplicados.
+- Las direcciones de correo, los enlaces, los teléfonos y los números largos se reemplazan por `<EMAIL>`, `<URL>` y `<NUM>`. En este conjunto el texto viene separado por espacios (`nombre @ dominio . com`, `http : / / www . sitio . net`, `( 713 ) 853 - 1411`), y las reglas contemplan esa forma. Medido sobre el CSV publicado: no queda ninguna dirección de correo ni teléfono con ese formato; de algunos enlaces queda solo el resto de la ruta, sin el dominio.
+- **Los nombres de personas no se quitan.** Reconocerlos bien es otro problema; con correos de una organización habría que resolverlo.
+- Las palabras vacías que se descartan son las del **inglés** («the», «of», «and»), porque el conjunto está en inglés. No se quitan tildes.
+
+Para regenerar el CSV desde cero: bajar `Phishing_Email.csv` a `datos/`, borrar `datos/correos_anonimizados.csv` y correr `python phishing_ia.py`.
 
 División estratificada: 70 % entrenamiento, 15 % validación y 15 % prueba (semilla 42).
 
@@ -151,5 +165,7 @@ resultados/         métricas y gráficos
 ## Limitaciones
 
 - El conjunto de datos está en inglés: el agente no sirve todavía para correos en castellano (sección 2.3 del TP).
-- Con el umbral elegido en validación se cumple la meta de menos del 1 % de falsos positivos, pero la detección baja al 92,6 %: todavía no se cumplen las dos metas a la vez (sección 5.3 del TP).
-- Los rasgos estructurales de la Tabla 6 del TP (enlaces, dominios, SPF/DKIM/DMARC) no están implementados: el prototipo usa solo las palabras.
+- Con el umbral elegido en validación se cumple la meta de menos del 1 % de falsos positivos, pero la detección baja al 89,3 %: todavía no se cumplen las dos metas a la vez (sección 5.3 del TP).
+- Una sola división de los datos: las diferencias chicas entre modelos (por ejemplo, perceptrón simple contra multicapa) podrían cambiar con otra división.
+- La antigüedad del dominio se carga a mano, porque el conjunto no trae remitente.
+- Los rasgos estructurales de la Tabla 6 del TP (enlaces, dominios, SPF/DKIM/DMARC) no están implementados: el conjunto solo trae el texto, sin encabezados ni enlaces originales, así que no se pueden calcular. El prototipo usa solo las palabras.

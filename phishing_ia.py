@@ -52,13 +52,47 @@ SEMILLA = 42
 
 
 # ------------------------------------------------------------ 1. Datos
+TLD = r"(?:com|net|org|edu|gov|mil|biz|info|int|us|uk|ca|de|fr|it|es|nl|au|jp|ru|ch|se|br|ar|mx|cn|in|tv|cc|ws|co|io)"
+PUNTO = r"\s*\.\s*"                     # el dataset separa todo con espacios: «gunet . edu»
+PARTE = r"[\w%-]+"
+RUTA = r"(?:\s*[/?=&%~#+:]\s*[\w.%-]*)*"  # «/ carpeta / pagina . html ? id = 3»
+
+
+def siete_cifras(m):
+    return " <NUM> " if sum(c.isdigit() for c in m.group()) >= 7 else m.group()
+
+
+ANONIMIZAR = [
+    # Direcciones de correo, juntas o con espacios: «nombre @ dominio . com»,
+    # y las internas de Enron: «hou / ect @ ect».
+    (rf"[\w.+-]+\s*@\s*{PARTE}(?:{PUNTO}{PARTE})+", " <EMAIL> "),
+    (r"\S+@\S+", " <EMAIL> "),
+    (r"[\w.+-]+\s*@\s*[\w-]+", " <EMAIL> "),
+    (r"(?:<EMAIL>\s*)?@\s*[a-z][\w-]*(?:\s*\.\s*[a-z][\w-]*)*", " <EMAIL> "),
+    # Enlaces: «http : / / ...», «www . ...» y dominios sueltos «sitio . com / ...».
+    (rf"(?:https?|ftp)\s*:\s*/\s*/\s*{PARTE}(?:{PUNTO}{PARTE})*{RUTA}", " <URL> "),
+    (rf"www{PUNTO}{PARTE}(?:{PUNTO}{PARTE})*{RUTA}", " <URL> "),
+    (r"(?:https?://|www\.)\S+", " <URL> "),
+    (rf"\b[\w-]+(?:{PUNTO}[\w-]+)*{PUNTO}{TLD}\b{RUTA}", " <URL> "),
+    # Teléfonos: «( 713 ) 853 - 1411», «1 - 800 - 555 - 1212», «853 - 1411».
+    (r"(?:\+?\d{1,3}\s*[-.]?\s*)?(?:\(\s*\d{3}\s*\)|\d{3})\s*[-./]?\s*\d{3}\s*[-./]\s*\d{4}\b", " <NUM> "),
+    (r"\b\d{3}\s*-\s*\d{4}\b", " <NUM> "),
+    # Grupos de cifras con guiones o puntos que suman 7 cifras o más.
+    (r"\(?\+?\d+\)?(?:\s*[-.]\s*\(?\d+\)?){2,}", siete_cifras),
+    # Números largos (documentos, tarjetas, cuentas), aunque vengan partidos.
+    (r"\d(?:[\s-]?\d){5,}", " <NUM> "),
+]
+
+
 def anonimizar(texto: str) -> str:
-    """Oculta datos sensibles: direcciones de correo, URL y números largos
-    (teléfonos, documentos, tarjetas). Se reemplazan por una marca, así el
-    modelo sigue sabiendo QUE había un enlace, pero no CUÁL."""
-    texto = re.sub(r"\S+@\S+", " <EMAIL> ", texto)
-    texto = re.sub(r"(https?://|www\.)\S+", " <URL> ", texto)
-    texto = re.sub(r"\d{6,}", " <NUM> ", texto)
+    """Oculta datos sensibles: direcciones de correo, enlaces, teléfonos y
+    números largos (documentos, tarjetas). Se reemplazan por una marca, así
+    el modelo sigue sabiendo QUE había un enlace, pero no CUÁL.
+    Ojo: en este dataset el texto viene separado por espacios
+    («nombre @ dominio . com», «http : / / www . sitio . net»), y las reglas
+    tienen que contemplarlo. Los nombres de personas NO se quitan."""
+    for patron, marca in ANONIMIZAR:
+        texto = re.sub(patron, marca, texto)
     return texto
 
 
