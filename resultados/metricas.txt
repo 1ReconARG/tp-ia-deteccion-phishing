@@ -1,0 +1,43 @@
+=== Red bayesiana ===
+Exactitud validación: 0.9595
+Exactitud prueba: 0.9587
+Phishing detectado (recall): 0.9320
+Precisión: 0.9556
+Legítimos marcados por error: 0.0255
+VP: 905
+FN: 66
+FP: 42
+VN: 1603
+
+=== Árbol de decisión ===
+Exactitud validación: 0.8459
+Exactitud prueba: 0.8505
+Phishing detectado (recall): 0.9434
+Precisión: 0.7316
+Legítimos marcados por error: 0.2043
+VP: 916
+FN: 55
+FP: 336
+VN: 1309
+
+=== Perceptrón simple ===
+Exactitud validación: 0.9629
+Exactitud prueba: 0.9618
+Phishing detectado (recall): 0.9475
+Precisión: 0.9494
+Legítimos marcados por error: 0.0298
+VP: 920
+FN: 51
+FP: 49
+VN: 1596
+
+=== Perceptrón multicapa ===
+Exactitud validación: 0.9725
+Exactitud prueba: 0.9744
+Phishing detectado (recall): 0.9691
+Precisión: 0.9622
+Legítimos marcados por error: 0.0225
+VP: 941
+FN: 30
+FP: 37
+VN: 1608

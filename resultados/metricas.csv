@@ -1,0 +1,5 @@
+Modelo,Exactitud validación,Exactitud prueba,Phishing detectado (recall),Precisión,Legítimos marcados por error,VP,FN,FP,VN
+Red bayesiana,0.9595,0.9587,0.9320,0.9556,0.0255,905,66,42,1603
+Árbol de decisión,0.8459,0.8505,0.9434,0.7316,0.2043,916,55,336,1309
+Perceptrón simple,0.9629,0.9618,0.9475,0.9494,0.0298,920,51,49,1596
+Perceptrón multicapa,0.9725,0.9744,0.9691,0.9622,0.0225,941,30,37,1608
