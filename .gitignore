@@ -1,2 +1,5 @@
 datos/Phishing_Email.csv
 __pycache__/
+datos/a_revisar.csv
+datos/denuncias.csv
+modelo/anterior/

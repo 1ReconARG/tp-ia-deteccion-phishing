@@ -3,7 +3,7 @@ TP Final IA (0246) - Detección de correos de phishing - Grupo 10.
 Integrantes: Alan Bazarian, Elias Joshua Caero, Ignacio Pacheco,
 Mateo Valenzuela y Valentino Albarian.
 
-Prototipo: entrena y compara tres recursos vistos en la materia sobre el
+Prototipo: entrena y compara cuatro recursos vistos en la materia sobre el
 mismo conjunto público de correos etiquetados (aprendizaje supervisado):
   1) Red bayesiana: el nodo "phishing" influye sobre cada palabra, y las
      palabras se suponen independientes entre sí dado la clase.
@@ -12,12 +12,16 @@ mismo conjunto público de correos etiquetados (aprendizaje supervisado):
   4) Perceptrón multicapa con activación sigmoidea, entrenado con
      backpropagation y descenso de gradiente.
 
+Además guarda en modelo/ lo que usa el agente (agente.py): el vectorizador,
+el perceptrón multicapa y el árbol.
+
 Uso:      python phishing_ia.py
 Requiere: pandas, scikit-learn, matplotlib (ver requirements.txt).
 """
 import re
 from pathlib import Path
 
+import joblib
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -35,6 +39,7 @@ BASE = Path(__file__).parent
 DATOS = BASE / "datos"
 SALIDA = BASE / "resultados"
 SALIDA.mkdir(exist_ok=True)
+MODELO = BASE / "modelo"
 SEMILLA = 42
 
 
@@ -71,30 +76,53 @@ def cargar() -> pd.DataFrame:
     return df
 
 
-# ------------------------------------------------------------ 2. Entrenar y evaluar
-def main():
-    df = cargar()
-    # 70 % entrenamiento, 15 % validación, 15 % prueba, con la misma
-    # proporción de cada clase en las tres partes.
+# ------------------------------------------------------------ 2. Piezas reutilizables
+def dividir(df):
+    """70 % entrenamiento, 15 % validación, 15 % prueba, con la misma
+    proporción de cada clase en las tres partes."""
     x_tmp, x_test, y_tmp, y_test = train_test_split(
         df["texto"], df["y"], test_size=0.15, random_state=SEMILLA, stratify=df["y"])
     x_train, x_val, y_train, y_val = train_test_split(
         x_tmp, y_tmp, test_size=0.15 / 0.85, random_state=SEMILLA, stratify=y_tmp)
-    print(f"Entrenamiento {len(x_train)} · validación {len(x_val)} · prueba {len(x_test)}")
+    return x_train, x_val, x_test, y_train, y_val, y_test
 
-    # Cada correo se convierte en un vector de números: un peso por palabra
-    # para las 3.000 palabras más útiles.
-    vect = TfidfVectorizer(max_features=3000, stop_words="english", min_df=3)
-    v_train = vect.fit_transform(x_train)
-    v_val, v_test = vect.transform(x_val), vect.transform(x_test)
 
-    modelos = {
+def nuevo_vectorizador():
+    """Cada correo se convierte en un vector de números: un peso por palabra
+    para las 3.000 palabras más útiles."""
+    return TfidfVectorizer(max_features=3000, stop_words="english", min_df=3)
+
+
+def nuevos_modelos():
+    return {
         "Red bayesiana": MultinomialNB(),
         "Árbol de decisión": DecisionTreeClassifier(max_depth=12, random_state=SEMILLA),
         "Perceptrón simple": Perceptron(max_iter=50, random_state=SEMILLA),
         "Perceptrón multicapa": MLPClassifier(hidden_layer_sizes=(64,), activation="logistic",
                                               max_iter=30, random_state=SEMILLA),
     }
+
+
+def guardar_modelo(vect, modelos, carpeta=MODELO):
+    """Guarda lo que usa el agente: el vectorizador, el perceptrón multicapa
+    (decide) y el árbol (explica)."""
+    carpeta.mkdir(exist_ok=True)
+    joblib.dump({"vectorizador": vect,
+                 "mlp": modelos["Perceptrón multicapa"],
+                 "arbol": modelos["Árbol de decisión"]}, carpeta / "detector.joblib", compress=3)
+
+
+# ------------------------------------------------------------ 3. Entrenar y evaluar
+def main():
+    df = cargar()
+    x_train, x_val, x_test, y_train, y_val, y_test = dividir(df)
+    print(f"Entrenamiento {len(x_train)} · validación {len(x_val)} · prueba {len(x_test)}")
+
+    vect = nuevo_vectorizador()
+    v_train = vect.fit_transform(x_train)
+    v_val, v_test = vect.transform(x_val), vect.transform(x_test)
+
+    modelos = nuevos_modelos()
 
     filas, informe = [], []
     fig, ejes = plt.subplots(2, 2, figsize=(10, 8))
@@ -133,7 +161,7 @@ def main():
     tabla.set_index("Modelo")[cols].plot.bar(ax=plt.gca(), rot=0,
                                              color=["#1f4e79", "#c55a11", "#548235"], figsize=None)
     plt.ylim(0.7, 1.0); plt.ylabel("Proporción (conjunto de prueba)"); plt.xlabel("")
-    plt.title("Comparación de los cuatro modelos"); plt.legend(loc="lower right")
+    plt.title("Comparación de los cuatro modelos"); plt.legend(loc="upper center", bbox_to_anchor=(0.5, -0.12), ncol=3, frameon=False)
     plt.grid(axis="y", alpha=0.3); plt.tight_layout()
     plt.savefig(SALIDA / "comparacion_modelos.png", dpi=150)
 
@@ -152,6 +180,9 @@ def main():
     plt.title("Perceptrón multicapa: el error baja al ajustar los pesos")
     plt.grid(alpha=0.3); plt.tight_layout()
     plt.savefig(SALIDA / "curva_error_mlp.png", dpi=150)
+
+    guardar_modelo(vect, modelos)
+    print("Modelo del agente guardado en modelo/detector.joblib")
 
     texto = "\n\n".join(informe)
     print(texto)

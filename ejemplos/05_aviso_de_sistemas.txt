@@ -1,0 +1,5 @@
+Subject: password expiration notice
+
+Your network password will expire in 3 days. Please log in to the IT portal and change your password before it expires to avoid losing access. Contact the help desk if you need assistance.
+
+IT Department

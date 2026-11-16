@@ -1,0 +1,11 @@
+Subject: URGENT: your account has been suspended
+
+Dear customer,
+
+We detected unusual activity and your bank account has been temporarily suspended.
+To restore access you must verify your account information within 24 hours.
+Click here to confirm your identity and update your password: http://secure-bank-verify.co/login
+
+If you do not verify your account, it will be permanently closed.
+
+Customer Security Team
